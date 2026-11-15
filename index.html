@@ -8,16 +8,16 @@
 /* Layout: one candidate card at a time on a boutique backdrop, rank pills 1→10 under it, the 10→1 lineup (accordions) below. Light = pink boutique, dark = purple night. */
 :root{
   --bg:#f6c9e0; --bg-line:#eaa6c9; --paper:#fffafc; --ink:#4a1236; --ink-soft:#8a4a72;
-  --pink:#e0358f; --pink-deep:#b81f72; --lilac:#c9b3f2; --used:#efd6e4; --rule:#f0d3e3; --on-pink:#ffffff; --blurb:#4a1236; --pink-soft:#ffe3f1; --lilac-soft:#eee6ff; --bubble-a:#f7b3d6; --bubble-b:#d3c2f7;
+  --pink:#e0358f; --pink-deep:#b81f72; --lilac:#c9b3f2; --used:#efd6e4; --rule:#f0d3e3; --on-pink:#ffffff; --blurb:#4a1236; --pink-soft:#ffe3f1; --lilac-soft:#eee6ff; --bubble-a:#f7b3d6; --bubble-b:#d3c2f7; --green:#23965a; --green-soft:#dcf5e6; --red:#d92b4b; --red-soft:#ffe0e6;
   --f-display:"Sniglet","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
   --f-body:"Delius","Trebuchet MS",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1c1240; --bg-line:#2c1f63; --paper:#2a1d5c; --ink:#f3e9ff; --ink-soft:#b9a6e8;
-  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; color-scheme:dark }}
+  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; --green:#5fdc95; --green-soft:#1f4a4a; --red:#ff6d86; --red-soft:#55224f; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#1c1240; --bg-line:#2c1f63; --paper:#2a1d5c; --ink:#f3e9ff; --ink-soft:#b9a6e8;
-  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; color-scheme:dark }
+  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; --green:#5fdc95; --green-soft:#1f4a4a; --red:#ff6d86; --red-soft:#55224f; color-scheme:dark }
 
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -54,8 +54,17 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .count{font-family:var(--f-display);color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 .traits{list-style:none;margin:0;padding:0;display:grid;gap:10px;position:relative}
 .traits{gap:14px}
-.traits li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;font-size:clamp(17px,2.6vw,20px);line-height:1.4}
-.traits li::before{content:"";width:14px;height:14px;margin-top:.35em;border:3px solid var(--pink);border-radius:50% 45% 55% 40%;transform:rotate(-12deg)}
+.traits li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start;font-size:clamp(17px,2.6vw,20px);line-height:1.4}
+.traits .flag{width:34px;height:34px;margin-top:-.1em}
+/* green flag / red flag: hand-drawn rings in the same chunky stroke as the rank circles */
+.flag{display:block;flex:none;overflow:visible}
+.flag .ring{stroke-width:2.6;stroke-linejoin:round}
+.flag .mark{stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.flag.g{color:var(--green);transform:rotate(-8deg)}
+.flag.r{color:var(--red);transform:rotate(7deg)}
+.flag.g .ring{fill:var(--green-soft);stroke:currentColor}.flag.g .mark{fill:currentColor;stroke:currentColor;stroke-width:1.4}
+.flag.r .ring{fill:var(--red-soft);stroke:currentColor}.flag.r .mark{fill:none;stroke:currentColor}
+.flagged{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start}
 .traits li p{text-wrap:pretty}
 .tag{font-family:var(--f-display);font-size:13px;letter-spacing:.04em;text-transform:lowercase;justify-self:start;
   background:var(--lilac);color:var(--ink);border-radius:999px;padding:2px 12px;border:2px solid var(--ink)}
@@ -101,6 +110,7 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .acc-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;margin:0 16px;padding:12px 0 14px;border-top:2px solid var(--rule)}
 @media (max-width:520px){.acc-body{grid-template-columns:minmax(0,1fr)}}
 .acc-body div{min-width:0}
+.acc-body .flag{width:22px;height:22px}
 .acc-body small{display:block;font-family:var(--f-display);font-size:12px;color:var(--ink-soft);letter-spacing:.02em}
 
 /* verdict + share */
@@ -124,8 +134,9 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .badge{font-family:var(--f-display);font-weight:800;font-size:30px;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
   background:var(--pink);color:var(--on-pink);border:3px solid var(--ink);transform:rotate(-6deg);font-variant-numeric:tabular-nums}
 .row h4{font-family:var(--f-display);font-weight:800;margin:0 0 10px;font-size:20px}
-.row ul{margin:0;padding:0 0 0 18px;display:grid;gap:8px;font-size:16px;max-width:52ch}
-.row li::marker{color:var(--pink)}
+.row ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:16px;max-width:52ch}
+.row li .flag{width:26px;height:26px}
+.row li.flagged{gap:10px;align-items:center}
 /* phone: number + name side by side, traits full width underneath, crowd graph under the traits */
 @media (max-width:720px){.row>div:nth-child(2){display:contents}.row h4{align-self:center;margin:0}.row ul{grid-column:1/-1;max-width:none}}
 .row li{text-wrap:pretty}
@@ -342,7 +353,17 @@ const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;
 const pad = n=>String(n).padStart(2,"0");
 const openSlots=new Set(); let lastDealt="";
 
-function traitList(c){return c.map(t=>`<li>${esc(t.text)}</li>`).join("")}
+/* Green flag first, red flag second, so every card reads the same way. */
+const flagged = c => c.slice().sort((a,b)=>(a.pol==="p"?0:1)-(b.pol==="p"?0:1));
+const RING = "M12.2 2.4c5.5-.1 9.7 4.2 9.4 9.8-.3 5.2-4.5 9.3-9.8 9.4C6.5 21.7 2.3 17.3 2.5 11.9 2.7 6.6 6.9 2.5 12.2 2.4z";
+function flagIcon(pol){
+  const g = pol==="p";
+  const mark = g
+    ? `<path class="mark" d="M12 17.1c-3.5-2.3-5.5-4.4-5.5-6.8 0-1.6 1.2-2.8 2.7-2.8 1.2 0 2.2.7 2.8 1.8.6-1.1 1.6-1.8 2.8-1.8 1.5 0 2.7 1.2 2.7 2.8 0 2.4-2 4.5-5.5 6.8z"/>`
+    : `<path class="mark" d="M6.4 6.7 17.7 17.4"/>`;
+  return `<svg class="flag ${g?"g":"r"}" viewBox="0 0 24 24" role="img" aria-label="${g?"Green flag":"Red flag"}"><path class="ring" d="${RING}"/>${mark}</svg>`;
+}
+function traitList(c){return flagged(c).map(t=>`<li class="flagged">${flagIcon(t.pol)}<span>${esc(t.text)}</span></li>`).join("")}
 
 function render(){
   document.getElementById("tab-daily").setAttribute("aria-pressed",S.mode==="daily");
@@ -385,13 +406,13 @@ function playHTML(){
         <span class="acc-title">Candidate ${pad(ci+1)}</span>
         <span class="chev" aria-hidden="true"></span>
       </button>
-      <div class="acc-body" id="acc-${ci}" ${open?"":"hidden"}>${S.cands[ci].map(t=>`<div>${esc(t.short)}</div>`).join("")}</div>
+      <div class="acc-body" id="acc-${ci}" ${open?"":"hidden"}>${flagged(S.cands[ci]).map(t=>`<div class="flagged">${flagIcon(t.pol)}<span>${esc(t.short)}</span></div>`).join("")}</div>
     </div>`}).join("");
   const free = "";
   return `<div class="board">
     <section class="card" aria-live="polite">
       <div class="card-head"><h2>Candidate ${pad(S.i+1)}</h2><span class="count">${S.i+1} of ${N}</span></div>
-      <ul class="traits">${c.map(t=>`<li><p>${esc(t.text)}</p></li>`).join("")}</ul>
+      <ul class="traits">${flagged(c).map(t=>`<li>${flagIcon(t.pol)}<p>${esc(t.text)}</p></li>`).join("")}</ul>
       <div class="picker">
         <h3>They're a…</h3>
         <div class="ranks" role="group" aria-label="Pick a rank">${ranks}</div>
