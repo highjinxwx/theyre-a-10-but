@@ -126,7 +126,8 @@ button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
 .row h4{font-family:var(--f-display);font-weight:800;margin:0 0 10px;font-size:20px}
 .row ul{margin:0;padding:0 0 0 18px;display:grid;gap:8px;font-size:16px;max-width:52ch}
 .row li::marker{color:var(--pink)}
-@media (max-width:560px){.row ul{margin-left:-68px}}
+/* phone: number + name side by side, traits full width underneath, crowd graph under the traits */
+@media (max-width:720px){.row>div:nth-child(2){display:contents}.row h4{align-self:center;margin:0}.row ul{grid-column:1/-1;max-width:none}}
 .row li{text-wrap:pretty}
 
 .stats{display:flex;flex-direction:column;gap:6px;font-size:14px}
