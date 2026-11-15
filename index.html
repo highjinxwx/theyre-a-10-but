@@ -1,0 +1,489 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>They're a 10 but…</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Delius&display=swap">
+<style>
+/* Layout: one candidate card at a time on a boutique backdrop, rank pills 1→10 under it, the 10→1 lineup (accordions) below. Light = pink boutique, dark = purple night. */
+:root{
+  --bg:#f6c9e0; --bg-line:#eaa6c9; --paper:#fffafc; --ink:#4a1236; --ink-soft:#8a4a72;
+  --pink:#e0358f; --pink-deep:#b81f72; --lilac:#c9b3f2; --used:#efd6e4; --rule:#f0d3e3; --on-pink:#ffffff; --blurb:#4a1236; --pink-soft:#ffe3f1; --lilac-soft:#eee6ff; --bubble-a:#f7b3d6; --bubble-b:#d3c2f7;
+  --f-display:"Sniglet","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;
+  --f-body:"Delius","Trebuchet MS",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1c1240; --bg-line:#2c1f63; --paper:#2a1d5c; --ink:#f3e9ff; --ink-soft:#b9a6e8;
+  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#1c1240; --bg-line:#2c1f63; --paper:#2a1d5c; --ink:#f3e9ff; --ink-soft:#b9a6e8;
+  --pink:#ff6fb8; --pink-deep:#ff9bd0; --lilac:#7457c9; --used:#3a2b78; --rule:#3e2f7e; --on-pink:#ffffff; --blurb:#ffffff; --pink-soft:#4a1f5e; --lilac-soft:#2b2470; --bubble-a:#8a2f78; --bubble-b:#4d3fa3; color-scheme:dark }
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.45;
+  background-image:
+    repeating-linear-gradient(97deg, transparent 0 46px, var(--bg-line) 46px 48px, transparent 48px 120px),
+    repeating-linear-gradient(-3deg, transparent 0 80px, var(--bg-line) 80px 81px, transparent 81px 160px);
+}
+.wrap{max-width:820px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:20px}
+
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,6vw,44px);line-height:1;margin:0;
+  color:var(--pink);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;transform:rotate(-2deg);
+  text-shadow:3px 3px 0 var(--paper)}
+.logo small{display:block;font-size:.42em;-webkit-text-stroke:0;color:var(--ink-soft);text-shadow:none;margin-top:6px;font-weight:400;transform:rotate(1deg)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-family:var(--f-display);font-size:16px;border:3px solid var(--pink);background:var(--paper);color:var(--pink-deep);
+  border-radius:999px;padding:6px 16px;cursor:pointer;box-shadow:0 3px 0 var(--pink)}
+.pill[aria-pressed="true"]{background:var(--pink);color:var(--on-pink);transform:rotate(-1.5deg)}
+button:focus-visible{outline:3px dashed var(--ink);outline-offset:3px}
+
+.board{display:flex;flex-direction:column;gap:20px}
+
+/* the card */
+.card{position:relative;background:var(--paper);border:3px solid var(--ink);border-radius:28px;padding:22px 22px 18px;
+  box-shadow:6px 7px 0 var(--pink), 6px 7px 0 3px var(--ink)}
+.card::before{content:"";position:absolute;inset:8px;border:2px dashed var(--lilac);border-radius:20px;pointer-events:none}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px;position:relative}
+.card-head h2{font-family:var(--f-display);font-weight:800;font-size:clamp(22px,4.4vw,30px);margin:0;transform:rotate(-1deg)}
+.count{font-family:var(--f-display);color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.traits{list-style:none;margin:0;padding:0;display:grid;gap:10px;position:relative}
+.traits{gap:14px}
+.traits li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;font-size:clamp(17px,2.6vw,20px);line-height:1.4}
+.traits li::before{content:"";width:14px;height:14px;margin-top:.35em;border:3px solid var(--pink);border-radius:50% 45% 55% 40%;transform:rotate(-12deg)}
+.traits li p{text-wrap:pretty}
+.tag{font-family:var(--f-display);font-size:13px;letter-spacing:.04em;text-transform:lowercase;justify-self:start;
+  background:var(--lilac);color:var(--ink);border-radius:999px;padding:2px 12px;border:2px solid var(--ink)}
+.traits p{margin:0}
+.card.deal{animation:deal .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes deal{from{transform:translateX(40px) rotate(6deg);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.card.deal{animation:none}}
+
+/* ranking */
+.picker{margin-top:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+.picker h3{font-family:var(--f-display);font-size:18px;margin:0}
+.ranks{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+@media (max-width:520px){.ranks{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.rank{font-family:var(--f-display);font-weight:800;font-size:20px;aspect-ratio:1;border-radius:50%;border:3px solid var(--pink);
+  background:var(--paper);color:var(--pink-deep);cursor:pointer;font-variant-numeric:tabular-nums;max-width:100%;box-shadow:0 3px 0 var(--pink)}
+.rank:hover:not(:disabled){transform:translateY(-2px) rotate(-4deg)}
+.rank[aria-pressed="true"]{background:var(--pink);color:var(--on-pink);transform:scale(1.08) rotate(-4deg)}
+.rank:disabled{background:var(--used);border-color:var(--used);color:var(--ink-soft);box-shadow:none;cursor:not-allowed;
+  text-decoration:line-through;text-decoration-thickness:3px}
+.lock-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn{font-family:var(--f-display);font-weight:800;font-size:18px;border:3px solid var(--ink);background:var(--pink);color:var(--on-pink);
+  border-radius:999px;padding:10px 22px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--paper);color:var(--ink)}
+.btn.sm{font-size:15px;padding:6px 16px;border-width:2px;box-shadow:0 3px 0 var(--ink)}
+.hint{color:var(--ink-soft);font-size:14px;margin:0}
+
+/* lineup: accordions */
+.ladder{display:flex;flex-direction:column;gap:8px}
+.ladder h3{font-family:var(--f-display);margin:0;font-size:20px}
+.slot{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;align-items:center;min-height:48px;padding:4px 12px;
+  border:2px dashed var(--lilac);border-radius:18px;background:transparent}
+.sq{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:20px;
+  font-variant-numeric:tabular-nums;border:2px solid var(--pink);color:var(--pink-deep)}
+.acc{background:var(--paper);border:2px solid var(--pink);border-radius:18px;overflow:hidden}
+.acc-head{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:10px 12px;
+  background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.acc .sq{background:var(--pink);color:var(--on-pink);border-color:var(--pink)}
+.acc-title{font-family:var(--f-display);font-weight:800;font-size:17px;display:block;line-height:1.2}
+.acc-sub{font-size:13px;color:var(--ink-soft)}
+.chev{width:12px;height:12px;border-right:3px solid var(--pink);border-bottom:3px solid var(--pink);transform:rotate(45deg);margin:0 6px 4px}
+.acc-head[aria-expanded="true"] .chev{transform:rotate(-135deg);margin-bottom:-4px}
+.acc-body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 24px;margin:0 16px;padding:12px 0 14px;border-top:2px solid var(--rule)}
+@media (max-width:520px){.acc-body{grid-template-columns:minmax(0,1fr)}}
+.acc-body div{min-width:0}
+.acc-body small{display:block;font-family:var(--f-display);font-size:12px;color:var(--ink-soft);letter-spacing:.02em}
+
+/* verdict + share */
+.verdict{background:var(--paper);border:3px solid var(--ink);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:4px 5px 0 var(--lilac)}
+.verdict h3{font-family:var(--f-display);margin:0;font-size:18px}
+.verdict .big{font-family:var(--f-display);font-weight:800;font-size:34px;color:var(--pink-deep);line-height:1;font-variant-numeric:tabular-nums}
+.verdict-top{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
+.emoji-line{font-size:22px;letter-spacing:1px;line-height:1.3;word-break:break-all}
+.share-box{width:100%;font:14px/1.45 ui-monospace,Menlo,monospace;background:var(--paper);color:var(--ink);border:2px solid var(--lilac);border-radius:12px;padding:8px;resize:none}
+
+/* results */
+.results{display:flex;flex-direction:column;gap:16px}
+.summary{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.summary h2{font-family:var(--f-display);font-weight:800;font-size:clamp(24px,5vw,34px);margin:0}
+.summary p{margin:4px 0 0;color:var(--ink-soft)}
+.rows{display:flex;flex-direction:column;gap:12px}
+.row{background:var(--paper);border:3px solid var(--ink);border-radius:22px;padding:16px 18px;display:grid;
+  grid-template-columns:60px minmax(0,1fr) 170px;gap:16px 20px;align-items:start}
+@media (max-width:720px){.row{grid-template-columns:52px minmax(0,1fr)}.row .stats{grid-column:1/-1}}
+.badge{font-family:var(--f-display);font-weight:800;font-size:30px;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  background:var(--pink);color:var(--on-pink);border:3px solid var(--ink);transform:rotate(-6deg);font-variant-numeric:tabular-nums}
+.row h4{font-family:var(--f-display);font-weight:800;margin:0 0 10px;font-size:20px}
+.row ul{margin:0;padding:0 0 0 18px;display:grid;gap:8px;font-size:16px;max-width:52ch}
+.row li::marker{color:var(--pink)}
+@media (max-width:560px){.row ul{margin-left:-68px}}
+.row li{text-wrap:pretty}
+
+.stats{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.stats strong{font-family:var(--f-display);font-size:22px;color:var(--pink-deep)}
+.hist{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;align-items:end;height:52px;border-bottom:2px solid var(--ink)}
+.hist i{display:block;background:var(--lilac);border-radius:4px 4px 0 0;min-height:2px}
+.hist i.me{background:var(--pink)}
+.hist-x{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;font-size:10px;text-align:center;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.note{background:var(--paper);border:2px dashed var(--pink);border-radius:16px;padding:10px 14px;font-size:14px;margin:0}
+.test-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.share{display:flex;flex-direction:column;gap:10px}
+.share h3{font-family:var(--f-display);margin:0;font-size:20px}
+.share-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch}
+@media (max-width:640px){.share-grid{grid-template-columns:minmax(0,1fr)}}
+.share-card{background:var(--pink-soft);border:3px solid var(--ink);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;box-shadow:4px 5px 0 var(--lilac);min-width:0}
+.share-head{display:flex;gap:8px;align-items:center;justify-content:space-between;width:100%}
+.share-head h4{font-family:var(--f-display);font-weight:800;font-size:18px;margin:0}
+.share-card .btn{margin-top:auto}
+.share-card > .hint{color:var(--blurb)}
+.share-card.alt{background:var(--lilac-soft);box-shadow:4px 5px 0 var(--pink)}
+.share-card.alt .bubble{background:var(--bubble-b)}
+.key{position:relative;align-self:flex-start;max-width:100%;background:var(--paper);border:3px solid var(--ink);border-radius:22px;padding:10px 16px;
+  display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px;margin-bottom:12px}
+.key b{font-family:var(--f-display)}
+.bubble{white-space:pre-wrap;word-break:break-word;background:var(--bubble-a);color:var(--ink);border-radius:18px 18px 18px 4px;padding:10px 14px;
+  font-size:15px;line-height:1.5;max-width:100%;user-select:all}
+.mode-opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--ink-soft)}
+.pill.sm{font-size:13px;padding:3px 12px;border-width:2px;box-shadow:0 2px 0 var(--pink)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="logo">They're a 10 but…<small id="sub">today's lineup</small></h1>
+    <nav class="tabs" aria-label="Game mode">
+      <button class="pill" id="tab-daily" aria-pressed="true">daily lineup</button>
+      <button class="pill" id="tab-free" aria-pressed="false">free play</button>
+    </nav>
+  </header>
+  <div id="verdict"></div>
+  <main id="app"></main>
+</div>
+
+<script>
+const TRAITS = {"Morals": {"p": [{"t": "Always stops to help turtles cross the road safely.", "s": "Helps turtles cross roads safely"}, {"t": "Returns shopping carts even when it is pouring rain.", "s": "Returns carts in pouring rain"}, {"t": "Admits when they are wrong without making a speech about it.", "s": "Admits mistakes without theatrics"}, {"t": "Makes sure people get credit for their own ideas.", "s": "Credits people for their ideas"}, {"t": "Points out when a cashier accidentally undercharges them.", "s": "Flags accidental undercharges"}, {"t": "Stands up for people who are not in the room.", "s": "Defends people behind their backs"}, {"t": "Makes sure the newest person in a group feels included.", "s": "Welcomes newcomers into the group"}, {"t": "Keeps promises even when nobody is keeping score.", "s": "Keeps promises without an audience"}, {"t": "Has publicly changed their mind after learning something new.", "s": "Publicly acknowledges changing their mind"}, {"t": "Stays to help clean up after community events.", "s": "Cleans up after community events"}, {"t": "Treats service workers with genuine patience.", "s": "Patient with service workers"}, {"t": "Leaves shared spaces better than they found them.", "s": "Leaves shared spaces cleaner"}, {"t": "Owns their mistakes before anyone else notices.", "s": "Owns mistakes before they’re noticed"}, {"t": "Encourages friends to set boundaries, even when those boundaries involve them.", "s": "Respects boundaries that affect them"}, {"t": "Goes out of their way to return lost items to their owners.", "s": "Returns lost items to owners"}], "n": [{"t": "Does not understand the difference between communism and socialism.", "s": "Confuses communism and socialism"}, {"t": "Pretends to know the manager to get special treatment.", "s": "Pretends to know the manager"}, {"t": "Says “finders keepers” about things with someone else’s name on them.", "s": "Keeps items labeled with owners’ names"}, {"t": "Leaves their shopping cart in the middle of a parking space.", "s": "Leaves carts in parking spaces"}, {"t": "Claims that small lies do not count if they make a story funnier.", "s": "Excuses little lies for laughs"}, {"t": "Calls themselves “brutally honest” right before being rude to a stranger.", "s": "Uses “brutal honesty” to insult"}, {"t": "Uses “it’s technically allowed” as their entire ethical framework.", "s": "Treats “technically allowed” as ethics"}, {"t": "Brags about getting free stuff by complaining to customer service.", "s": "Complains to get free stuff"}, {"t": "Expects you to back up their obviously exaggerated stories.", "s": "Expects support for exaggerated stories"}, {"t": "Acts offended when asked to apologize for a joke that did not land.", "s": "Resents apologizing for bad jokes"}, {"t": "Starts gossip by announcing “I hate drama.”", "s": "Gossips while claiming to hate drama"}, {"t": "Takes credit for ideas they did not come up with.", "s": "Takes credit for others’ ideas"}, {"t": "Cuts in line if the person ahead looks distracted.", "s": "Cuts ahead of distracted people"}, {"t": "Treats shared-space rules as optional whenever they are inconvenient.", "s": "Ignores inconvenient shared-space rules"}, {"t": "Leaves trash beside a full bin instead of finding another one.", "s": "Leaves trash beside full bins"}]}, "Habits": {"p": [{"t": "Handles all the vehicle maintenance because they genuinely enjoy doing it.", "s": "Enjoys handling vehicle maintenance"}, {"t": "Keeps spare phone chargers wherever they are needed.", "s": "Keeps spare chargers handy"}, {"t": "Replaces the toilet paper roll before anyone has to ask.", "s": "Always replaces toilet paper"}, {"t": "Keeps their plants watered and knows what each one needs.", "s": "Knows how to care for plants"}, {"t": "Makes extra dinner so tomorrow’s lunch is already handled.", "s": "Cooks extra for tomorrow’s lunch"}, {"t": "Washes dishes while cooking instead of leaving a mountain of them.", "s": "Washes dishes while cooking"}, {"t": "Changes the bedsheets on an actual schedule.", "s": "Changes sheets on schedule"}, {"t": "Always has a tiny emergency kit in their bag.", "s": "Carries a tiny emergency kit"}, {"t": "Sets helpful alarm labels like “leave now, seriously.”", "s": "Labels alarms with helpful reminders"}, {"t": "Checks the fridge before buying duplicate groceries.", "s": "Checks fridge before grocery shopping"}, {"t": "Knows exactly where the important documents are.", "s": "Organizes important documents"}, {"t": "Fills up the gas tank well before the warning light.", "s": "Fills the tank before empty"}, {"t": "Does the laundry and puts it away on the same day.", "s": "Washes and folds laundry same-day"}, {"t": "Keeps a shared grocery list updated without reminders.", "s": "Maintains a shared grocery list"}, {"t": "Cleans the dryer lint trap every single time.", "s": "Always cleans the dryer lint"}], "n": [{"t": "Never does the dishes.", "s": "Never does the dishes"}, {"t": "Leaves wet towels on the bed.", "s": "Leaves wet towels on bed"}, {"t": "Sets six alarms and sleeps through all six.", "s": "Sleeps through six alarms"}, {"t": "Leaves food wrappers between the couch cushions.", "s": "Leaves wrappers between couch cushions"}, {"t": "Puts empty containers back in the fridge.", "s": "Returns empty containers to fridge"}, {"t": "Starts cleaning and leaves every room half-finished.", "s": "Leaves every room half-cleaned"}, {"t": "Leaves a sticky drink ring on every table.", "s": "Leaves sticky rings on tables"}, {"t": "Runs late and tells you only after you are already waiting outside.", "s": "Announces lateness after you’re waiting"}, {"t": "Piles laundry on a chair until the chair disappears.", "s": "Buries a chair in laundry"}, {"t": "Uses your good scissors to open packages and never puts them back.", "s": "Uses scissors, never puts them back"}, {"t": "Keeps their phone on speaker in crowded places.", "s": "Uses speakerphone in crowded places"}, {"t": "Never replaces the toilet paper roll after using the last square.", "s": "Never replaces empty toilet paper"}, {"t": "Lets dishes “soak” until they become an archaeological site.", "s": "Lets dishes “soak” indefinitely"}, {"t": "Leaves toothpaste splatters all over the bathroom mirror.", "s": "Leaves toothpaste on bathroom mirror"}, {"t": "Leaves cabinet doors open after looking for something.", "s": "Leaves cabinet doors open"}]}, "Romance": {"p": [{"t": "Spoils you on every holiday.", "s": "Spoils you on holidays"}, {"t": "Remembers your usual takeout order down to the sauce.", "s": "Remembers your exact takeout order"}, {"t": "Plans dates around little things you have mentioned loving.", "s": "Plans dates around your interests"}, {"t": "Checks in after a hard day without demanding a full report.", "s": "Checks in without demanding details"}, {"t": "Makes playlists just for you.", "s": "Makes playlists just for you"}, {"t": "Celebrates your wins like they are headline news.", "s": "Celebrates every win with you"}, {"t": "Can talk through disagreements without keeping score.", "s": "Disagrees without keeping score"}, {"t": "Brings you a snack because they happened to be nearby.", "s": "Brings surprise snacks"}, {"t": "Is comfortable with separate hobbies and alone time.", "s": "Respects separate hobbies and alone time"}, {"t": "Keeps a secret note of gift ideas you have casually mentioned.", "s": "Keeps notes for thoughtful gifts"}, {"t": "Learns how you actually like to be comforted.", "s": "Learns how you like comfort"}, {"t": "Sends photos of things that reminded them of you.", "s": "Sends thoughtful “reminded me” photos"}, {"t": "Talks honestly about expectations early on.", "s": "Discusses expectations early"}, {"t": "Makes sure you feel welcome around their friends.", "s": "Welcomes you around their friends"}, {"t": "Remembers the stories behind your sentimental objects.", "s": "Remembers stories behind keepsakes"}], "n": [{"t": "Gets weird about you looking at their phone.", "s": "Acts suspicious about their phone"}, {"t": "Forgets anniversaries, then insists romance should be spontaneous.", "s": "Forgets anniversaries, calls it spontaneity"}, {"t": "Tells you to pick the restaurant, then vetoes every suggestion.", "s": "Vetoes every restaurant you suggest"}, {"t": "Posts photos of you together without asking first.", "s": "Posts couple photos without permission"}, {"t": "Changes a one-on-one date into a group outing without mentioning it.", "s": "Turns dates into surprise group outings"}, {"t": "Keeps score of who paid for the last coffee.", "s": "Keeps score over coffee money"}, {"t": "Says “we need to talk” and then disappears for four hours.", "s": "Says “we need to talk,” vanishes"}, {"t": "Eats the last bite of your favorite dessert without asking.", "s": "Takes your last dessert bite"}, {"t": "Tries to turn all your solo hobbies into activities you have to do together.", "s": "Makes your solo hobbies shared"}, {"t": "Says “I don’t care” about plans and gets sulky when you choose.", "s": "Says “don’t care,” then sulks"}, {"t": "Waits until you are leaving to start a serious conversation.", "s": "Starts serious talks as you leave"}, {"t": "Makes plans for your weekend without asking you first.", "s": "Plans your weekends without asking"}, {"t": "Treats choosing a movie together like a negotiation with no end.", "s": "Makes choosing movies an ordeal"}, {"t": "Calls texting “quality time” and rarely makes in-person plans.", "s": "Texts instead of meeting up"}, {"t": "Turns every disagreement into a competition they need to win.", "s": "Needs to win every disagreement"}]}, "Quirk": {"p": [{"t": "Has an obvious favorite animal and frequently buys trinkets featuring it.", "s": "Collects favorite-animal trinkets"}, {"t": "Names all their houseplants and remembers every name.", "s": "Names and remembers every houseplant"}, {"t": "Has a ridiculous, well-practiced victory dance.", "s": "Has a signature victory dance"}, {"t": "Can identify a surprising number of birds by their calls.", "s": "Recognizes birds by their calls"}, {"t": "Makes elaborate themed playlists for mundane errands.", "s": "Makes themed playlists for errands"}, {"t": "Writes tiny, lovingly dramatic reviews of restaurants they visit.", "s": "Writes dramatic restaurant reviews"}, {"t": "Always has an incredibly niche but fascinating fun fact ready.", "s": "Always has niche fun facts"}, {"t": "Creates elaborate lore for inanimate objects around the house.", "s": "Invents lore for household objects"}, {"t": "Is mysteriously good at guessing which song will play next.", "s": "Predicts the next song"}, {"t": "Can identify constellations on a clear night.", "s": "Identifies constellations at night"}, {"t": "Keeps a photo album called “excellent dogs I have met.”", "s": "Collects photos of excellent dogs"}, {"t": "Gets sincerely excited when the moon looks extra bright.", "s": "Gets excited about bright moons"}, {"t": "Can fold an origami crane from almost any scrap of paper.", "s": "Folds origami from scrap paper"}, {"t": "Invents affectionate nicknames for all the appliances.", "s": "Gives appliances affectionate nicknames"}, {"t": "Can turn an ordinary walk into a spontaneous scavenger hunt.", "s": "Makes walks into scavenger hunts"}], "n": [{"t": "Always has three drinks: one for hydration, one for flavor, and one for energy.", "s": "Always has three different drinks"}, {"t": "Explains the punchline of a joke before anyone can laugh.", "s": "Explains jokes before anyone laughs"}, {"t": "Uses an elaborate fake accent for entire car rides.", "s": "Uses fake accents for whole rides"}, {"t": "Explains movie scenes while the movie is still playing.", "s": "Narrates movies while they play"}, {"t": "Sings the restaurant birthday song even when nobody at the table has a birthday.", "s": "Sings birthday songs without birthdays"}, {"t": "Refuses to say goodbye without doing a thirty-second comedy bit.", "s": "Turns goodbyes into comedy routines"}, {"t": "Asks everyone at dinner to rate their food on a ten-point scale.", "s": "Requests dinner ratings out of ten"}, {"t": "Gives an unsolicited dramatic reading of every restaurant menu.", "s": "Dramatically reads every restaurant menu"}, {"t": "Insists on naming every appliance before you are allowed to use it.", "s": "Requires names for every appliance"}, {"t": "Makes a grand entrance announcement every time they walk into a room.", "s": "Announces every room entrance"}, {"t": "Does impressions of people who are still in the room.", "s": "Impersonates people standing right there"}, {"t": "Declares themself the DJ, then skips every song halfway through.", "s": "Skips every song halfway through"}, {"t": "Pauses podcasts every five minutes to share an unfinished theory.", "s": "Pauses podcasts for unfinished theories"}, {"t": "Uses a novelty soundboard during otherwise serious conversations.", "s": "Uses soundboards during serious talks"}, {"t": "Cannot tell a short story without twenty minutes of backstory.", "s": "Needs twenty minutes of backstory"}]}, "Communication": {"p": [{"t": "Asks whether you want advice or just someone to listen.", "s": "Asks whether to listen or advise"}, {"t": "Sends a quick ETA whenever plans change.", "s": "Updates ETAs when plans change"}, {"t": "Can explain a complicated idea without making anyone feel small.", "s": "Explains ideas without condescension"}, {"t": "Says when they need space instead of disappearing.", "s": "Communicates need for space"}, {"t": "Remembers little details from conversations months ago.", "s": "Remembers details from old conversations"}, {"t": "Apologizes sincerely without following it up with an excuse.", "s": "Apologizes without making excuses"}, {"t": "Asks questions instead of guessing what you meant.", "s": "Asks instead of assuming"}, {"t": "Can disagree without turning the volume up.", "s": "Disagrees without raising their voice"}, {"t": "Sends voice notes that are actually under a minute.", "s": "Keeps voice notes under a minute"}, {"t": "Makes the first move to clear up awkward misunderstandings.", "s": "Clears up misunderstandings first"}, {"t": "Knows how to end a phone call gracefully.", "s": "Ends calls gracefully"}, {"t": "Brings up sensitive issues privately instead of in front of friends.", "s": "Discusses sensitive topics privately"}, {"t": "Can listen to your story without turning it into their own.", "s": "Listens without hijacking your stories"}, {"t": "Can give a clear answer about what they want for dinner.", "s": "Knows what they want for dinner"}, {"t": "Makes comfortable silence feel natural.", "s": "Makes silence comfortable"}], "n": [{"t": "Sends “hey” and waits for a reply before revealing the actual question.", "s": "Texts “hey” without the question"}, {"t": "Sends seven separate texts instead of one complete thought.", "s": "Sends seven fragmented texts"}, {"t": "Answers serious questions with reaction GIFs.", "s": "Answers serious questions with GIFs"}, {"t": "Says “whatever” and expects you to decode what it means.", "s": "Expects mind-reading after “whatever”"}, {"t": "Interrupts stories to guess the ending, then guesses wrong.", "s": "Interrupts to guess story endings"}, {"t": "Claims they forgot your plans because “they weren’t in the group chat.”", "s": "Blames forgotten plans on group chats"}, {"t": "Starts every disagreement with “actually.”", "s": "Starts disagreements with “actually”"}, {"t": "Calls without warning and then asks why you did not answer.", "s": "Calls unannounced, demands an answer"}, {"t": "Takes three business days to answer a yes-or-no question.", "s": "Takes days for yes-or-no replies"}, {"t": "Sends a five-minute voice memo just to say “sounds good.”", "s": "Sends five-minute “sounds good” memos"}, {"t": "Turns every casual comment into a hypothetical debate.", "s": "Makes every comment a debate"}, {"t": "Says “I’m listening” while visibly scrolling their phone.", "s": "Scrolls while claiming to listen"}, {"t": "Asks for your opinion and immediately explains why it is wrong.", "s": "Asks opinions just to dismiss them"}, {"t": "Leaves every story on a cliffhanger and forgets to finish it.", "s": "Abandons stories on cliffhangers"}, {"t": "Says “can I be honest?” about things nobody asked them to judge.", "s": "Judges things nobody asked about"}]}, "Social Life": {"p": [{"t": "Remembers your friends’ names and asks how they are doing.", "s": "Remembers and asks about your friends"}, {"t": "Always brings something thoughtful for the host.", "s": "Brings thoughtful host gifts"}, {"t": "Can make small talk without abandoning you in a corner.", "s": "Socializes without leaving you stranded"}, {"t": "Shares a discreet signal with you for when it is time to leave a party.", "s": "Shares a secret party-exit signal"}, {"t": "Makes sure quieter people have room in group conversations.", "s": "Makes room for quieter people"}, {"t": "Makes thoughtful introductions between people.", "s": "Introduces people thoughtfully"}, {"t": "Respects your wish to head home early.", "s": "Respects leaving parties early"}, {"t": "Can laugh at themself when a joke falls flat.", "s": "Laughs at their own bad jokes"}, {"t": "Checks the mood before launching into a big comedy bit.", "s": "Reads the room before performing"}, {"t": "Checks before inviting anyone else to shared plans.", "s": "Asks before inviting extra people"}, {"t": "Keeps friends’ secrets even when everyone else is gossiping.", "s": "Keeps friends’ secrets"}, {"t": "Has fun at a mediocre party without insulting the host.", "s": "Enjoys mediocre parties without complaining"}, {"t": "Gets along with your friends without needing the spotlight.", "s": "Gets along without stealing attention"}, {"t": "Helps clean up after group gatherings.", "s": "Helps clean up after gatherings"}, {"t": "Can turn an awkward party conversation into a pleasant one.", "s": "Rescues awkward party conversations"}], "n": [{"t": "Invites a bonus person to every outing without checking.", "s": "Invites extra people without checking"}, {"t": "Retells the same embarrassing story about you at every gathering.", "s": "Retells your embarrassing stories publicly"}, {"t": "Turns every hangout into an unsolicited networking event.", "s": "Turns hangouts into networking events"}, {"t": "Plays loud videos at the dinner table.", "s": "Plays loud videos at dinner"}, {"t": "Always picks the restaurant but refuses to make the reservation.", "s": "Picks restaurants, avoids making reservations"}, {"t": "Talks through the entire movie at the theater.", "s": "Talks throughout theater movies"}, {"t": "Interprets “small get-together” as an invitation to bring six friends.", "s": "Brings six friends to gatherings"}, {"t": "Insists on controlling the playlist at someone else’s party.", "s": "Hijacks someone else’s party playlist"}, {"t": "Leaves you holding their drink and coat for half the evening.", "s": "Makes you hold their belongings"}, {"t": "Shows up an hour early and expects the host to be ready.", "s": "Arrives an hour early uninvited"}, {"t": "Starts party games without checking whether anyone wants to play.", "s": "Starts unwanted party games"}, {"t": "Corrects the host’s cooking in front of everyone.", "s": "Critiques the host’s cooking publicly"}, {"t": "Reads every group-chat message aloud even though you are in the same chat.", "s": "Reads group-chat messages aloud"}, {"t": "Says they are leaving at nine, then spends forty minutes saying goodbye.", "s": "Takes forty minutes to leave"}, {"t": "Introduces you to someone and immediately walks away.", "s": "Introduces you, then walks away"}]}};
+const CATS = Object.keys(TRAITS);
+const N = 10;
+/* TESTING: while true, the daily lineup is reshuffled on every page load (and by the Reshuffle button),
+   and nothing is sent to the shared crowd results. Set to false for the real daily game. */
+const TEST_RESHUFFLE = false;
+
+/* ---------- seeded randomness ---------- */
+function seedFrom(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(arr,rng){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* Each candidate: 3 traits from 3 different random categories, 1 positive + 2 negative.
+   Categories and polarity are never shown, and the order is shuffled so position gives nothing away.
+   No trait repeats within a lineup. */
+const PER = 3, POS = 1;
+function deal(seed){
+  const rng = mulberry(seedFrom(String(seed)));
+  const pools = {};
+  for(const c of CATS) pools[c] = {p:shuffle(TRAITS[c].p.map((_,i)=>i),rng), n:shuffle(TRAITS[c].n.map((_,i)=>i),rng)};
+  const out=[];
+  for(let i=0;i<N;i++){
+    const cats = shuffle(CATS,rng).slice(0,PER);
+    out.push(cats.map((c,k)=>{const pol=k<POS?"p":"n";const tr=TRAITS[c][pol][pools[c][pol].pop()];return {cat:c,pol,text:tr.t,short:tr.s}}));
+    out[i] = shuffle(out[i],rng);
+  }
+  return out;
+}
+
+/* ---------- local storage (per-viewer convenience only) ---------- */
+const store = {
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+const DAY = ymd(new Date());
+const YDAY = (()=>{const d=new Date();d.setDate(d.getDate()-1);return ymd(d)})();
+const fmtDay = s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric"})};
+const prettyDay = new Date().toLocaleDateString(undefined,{month:"long",day:"numeric"});
+/* Daily lineup number, Wordle-style: Nov 13 2026 is #1. */
+const EPOCH = [2026,10,13];
+const dayNum = s=>{const [y,m,d]=s.split("-").map(Number);return Math.round((new Date(y,m-1,d)-new Date(...EPOCH))/864e5)+1};
+const KEYCAP = r => r===10 ? "🔟" : r+"️⃣";
+const emojiRanks = ranks => ranks.map(KEYCAP).join("");
+
+/* ---------- state ---------- */
+let S;
+function newGame(mode){
+  const seed = mode==="daily" ? "daily-v2-"+DAY+(TEST_RESHUFFLE?"-test-"+Date.now():"") : "free-"+Date.now()+"-"+Math.random();
+  return {mode, seed, v:2, day:DAY, cands:deal(seed), ranks:Array(N).fill(null), i:0, pick:null, done:false};
+}
+function saveState(){ store.set("t10-"+S.mode, {...S, cands:undefined}) }
+function loadState(mode){
+  const s = store.get("t10-"+mode);
+  if(!s || s.v!==2 || (mode==="daily" && (s.day!==DAY || (!TEST_RESHUFFLE && s.seed!=="daily-v2-"+DAY)))) return newGame(mode);
+  return {...s, cands:deal(s.seed), pick:null};
+}
+function rememberDaily(){ const h=store.get("t10-hist")||{}; h[DAY]=S.ranks.slice();
+  const keep=Object.keys(h).sort().slice(-7); store.set("t10-hist",Object.fromEntries(keep.map(k=>[k,h[k]]))) }
+
+/* ---------- shared results (db) ----------
+   One doc per player at plays/<id>: {date, ranks, prevDate, prevRanks}.
+   Today's crowd = docs where date==today. Yesterday's crowd = date==yesterday ∪ prevDate==yesterday. */
+const crowd = {db:null, uid:null, mine:null, plays:null, status:"connecting", wrote:false, yday:null};
+async function connect(){
+  try{
+    const [db,user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if(!db || !user){crowd.status="off";render();return}
+    crowd.db=db; crowd.uid=await user.id();
+    if(crowd.uid){
+      const snap = await db.doc("plays/"+crowd.uid).get().catch(()=>null);
+      if(snap && snap.exists){crowd.mine=snap.data(); if(crowd.mine.date===DAY && Array.isArray(crowd.mine.ranks)) crowd.wrote=true}
+    }
+    // Finished today on another device: show those results here too.
+    if(crowd.wrote && S.mode==="daily" && !S.done){
+      const daily=loadState("daily"); daily.ranks=crowd.mine.ranks.slice(); daily.done=true; daily.i=N;
+      store.set("t10-daily",{...daily,cands:undefined}); S=daily;
+    }
+    const timer=setTimeout(()=>{if(crowd.status==="connecting"){crowd.status="slow";render()}},10000);
+    db.collection("plays").where("date","==",DAY).onSnapshot(snap=>{
+      if(!snap.metadata.fromCache) clearTimeout(timer);
+      crowd.plays = snap.docs.map(d=>d.data()).filter(d=>Array.isArray(d.ranks)&&d.ranks.length===N);
+      crowd.status="live"; render();
+    }, ()=>{clearTimeout(timer);crowd.status="off";render()});
+    if(S.mode==="daily" && S.done) submit();
+    loadYesterday();
+    render();
+  }catch(e){crowd.status="off";render()}
+}
+async function loadYesterday(){
+  const m=crowd.mine||{}, hist=store.get("t10-hist")||{};
+  const myRanks = m.date===YDAY ? m.ranks : m.prevDate===YDAY ? m.prevRanks : hist[YDAY];
+  if(!Array.isArray(myRanks)||myRanks.length!==N) return;
+  try{
+    const [a,b] = await Promise.all([
+      crowd.db.collection("plays").where("date","==",YDAY).get(),
+      crowd.db.collection("plays").where("prevDate","==",YDAY).get()]);
+    const byId=new Map();
+    for(const d of a.docs) byId.set(d.id,d.data().ranks);
+    for(const d of b.docs) byId.set(d.id,d.data().prevRanks);
+    const plays=[...byId.values()].filter(r=>Array.isArray(r)&&r.length===N).map(ranks=>({ranks}));
+    if(!plays.length) return;
+    crowd.yday={ranks:myRanks, ...score(myRanks,plays)};
+    renderVerdict();
+  }catch(e){}
+}
+async function submit(){
+  if(!crowd.db||!crowd.uid||crowd.wrote) return;
+  crowd.wrote=true;
+  const m=crowd.mine;
+  const prev = m && m.date!==DAY ? {prevDate:m.date??null, prevRanks:m.ranks??null} : {prevDate:m?.prevDate??null, prevRanks:m?.prevRanks??null};
+  const doc={date:DAY, ranks:S.ranks.slice(), at:Date.now(), ...prev};
+  try{ await crowd.db.doc("plays/"+crowd.uid).set(doc); crowd.mine=doc }
+  catch(e){ if(e && e.code==="invalid_argument"){crowd.status="readonly"; render()} }
+}
+
+/* ---------- test mode: a made-up crowd ----------
+   Each fake player scores candidates by how many good traits they have, plus personal taste (noise),
+   then ranks them 1-10. Gives realistic-looking spreads: clear favorites, contested middles. */
+function fakeCrowd(cands, players=140){
+  const appeal=cands.map(c=>c.filter(t=>t.pol==="p").length + Math.random()*1.2);
+  const noise=()=>(Math.random()+Math.random()+Math.random()-1.5)*1.6;
+  return [...Array(players)].map(()=>{
+    const order=appeal.map((a,ci)=>[a+noise(),ci]).sort((x,y)=>x[0]-y[0]);
+    const ranks=Array(N); order.forEach(([,ci],k)=>ranks[ci]=k+1); return {ranks};
+  });
+}
+
+/* ---------- crowd math ---------- */
+function statsFor(ci, myRank, plays){
+  const counts=Array(N+1).fill(0); for(const p of plays){const r=p.ranks[ci]; if(r>=1&&r<=N) counts[r]++}
+  const total=plays.length, max=Math.max(...counts.slice(1));
+  const avg=plays.reduce((s,p)=>s+(p.ranks[ci]||0),0)/total;
+  return {counts,total,pct:Math.round(100*counts[myRank]/total),avg,top:counts[myRank]===max};
+}
+/* Crowd match = average, across the 10 candidates, of the share of players who gave the same rank you did. */
+function score(ranks, plays){
+  const per=ranks.map((r,ci)=>statsFor(ci,r,plays));
+  return {per, players:plays.length, match:Math.round(per.reduce((s,x)=>s+x.pct,0)/N), favs:per.filter(x=>x.top).length};
+}
+function verdictText(y){
+  return `They're a 10 but… #${dayNum(YDAY)} ${fmtDay(YDAY)} verdict\n${emojiRanks(y.ranks)}\n${y.per.map(heart).join("")}\nCrowd match ${y.match}% · ${y.favs}/${N} crowd favorites`;
+}
+/* Test mode only: a made-up verdict so the share layout can be previewed. Never written anywhere. */
+function sampleVerdict(){
+  const rng=Math.random, ranks=[...Array(N)].map((_,i)=>i+1).sort(()=>rng()-.5);
+  const per=ranks.map(()=>{const top=rng()<.3;return {top,pct:top?20+Math.floor(rng()*30):Math.floor(rng()*25)}});
+  return {ranks,per,players:20+Math.floor(rng()*180),match:Math.round(per.reduce((s,x)=>s+x.pct,0)/N),favs:per.filter(x=>x.top).length,sample:true};
+}
+const heart = s => s.top ? "❤️‍🔥" : s.pct>=15 ? "💖" : "💗";
+
+/* ---------- rendering ---------- */
+const app = document.getElementById("app");
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad = n=>String(n).padStart(2,"0");
+const openSlots=new Set(); let lastDealt="";
+
+function traitList(c){return c.map(t=>`<li>${esc(t.text)}</li>`).join("")}
+
+function render(){
+  document.getElementById("tab-daily").setAttribute("aria-pressed",S.mode==="daily");
+  document.getElementById("tab-free").setAttribute("aria-pressed",S.mode==="free");
+  document.getElementById("sub").textContent = S.mode==="daily" ? "today's lineup · "+prettyDay : "free play · a fresh deal";
+  renderVerdict();
+  if(TEST_RESHUFFLE && S.mode==="daily") document.getElementById("verdict").innerHTML=
+    `<p class="note test-bar"><span><b>Test mode:</b> the daily lineup reshuffles every time you reload. Crowd results are off until launch.</span>
+     <button class="btn sm ghost" id="reshuffle">Reshuffle lineup</button></p>`;
+  app.innerHTML = S.done ? resultsHTML() : playHTML();
+  const card=app.querySelector(".card");
+  if(card && lastDealt!==S.seed+S.i){card.classList.add("deal");lastDealt=S.seed+S.i}
+}
+
+function renderVerdict(){
+  const el=document.getElementById("verdict"), y=crowd.yday;
+  if(!y || S.mode!=="daily"){el.innerHTML="";return}
+  const text=verdictText(y);
+  el.innerHTML=`<section class="verdict" aria-label="Yesterday's results">
+    <h3>Yesterday's verdict is in</h3>
+    <div class="verdict-top"><span class="big">${y.match}%</span><span>crowd match across ${y.players} ${y.players===1?"player":"players"} · you nailed the crowd favorite on ${y.favs} of ${N}</span></div>
+    <div class="emoji-line" aria-label="Your ranks and how the crowd agreed">${emojiRanks(y.ranks)}<br>${y.per.map(heart).join("")}</div>
+    <p class="hint">❤️‍🔥 you picked the crowd's top rank · 💖 at least 15% agreed · 💗 you were on your own</p>
+    <div class="lock-row"><button class="btn sm ghost" data-copy="${esc(text)}">Copy yesterday's verdict</button></div>
+  </section>`;
+}
+
+function ordinalWord(r){return ["","1","2","3","4","5","6","7","8","9","10"][r]}
+
+function playHTML(){
+  const c=S.cands[S.i], used=new Map(S.ranks.map((r,i)=>[r,i]).filter(x=>x[0]!=null));
+  const ranks=[...Array(N)].map((_,k)=>{const r=k+1;const u=used.has(r);
+    return `<button class="rank" data-rank="${r}" ${u?"disabled":""} aria-pressed="${S.pick===r}" aria-label="Rank ${r}${u?", used by candidate "+(used.get(r)+1):""}">${r}</button>`}).join("");
+  const slots=[...Array(N)].map((_,k)=>{const r=N-k;const ci=used.get(r);
+    if(ci==null) return `<div class="slot"><span class="sq">${r}</span><span class="hint">open</span></div>`;
+    const open=openSlots.has(ci);
+    return `<div class="acc">
+      <button class="acc-head" data-peek="${ci}" aria-expanded="${open}" aria-controls="acc-${ci}">
+        <span class="sq">${r}</span>
+        <span class="acc-title">Candidate ${pad(ci+1)}</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="acc-body" id="acc-${ci}" ${open?"":"hidden"}>${S.cands[ci].map(t=>`<div>${esc(t.short)}</div>`).join("")}</div>
+    </div>`}).join("");
+  const free = "";
+  return `<div class="board">
+    <section class="card" aria-live="polite">
+      <div class="card-head"><h2>Candidate ${pad(S.i+1)}</h2><span class="count">${S.i+1} of ${N}</span></div>
+      <ul class="traits">${c.map(t=>`<li><p>${esc(t.text)}</p></li>`).join("")}</ul>
+      <div class="picker">
+        <h3>They're a…</h3>
+        <div class="ranks" role="group" aria-label="Pick a rank">${ranks}</div>
+        <div class="lock-row">
+          <button class="btn" id="lock" ${S.pick==null?"disabled":""}>${S.pick==null?"Pick a number":"Lock in "+S.pick}</button>
+          <p class="hint">No take-backs. Each number only works once. Keys 1–9, 0 for 10, Enter to lock.</p>
+        </div>
+      </div>
+    </section>
+    <section class="ladder" aria-label="Your lineup so far">
+      <h3>Your lineup</h3>${slots}
+    </section>
+    ${free}
+  </div>`;
+}
+
+function resultsHTML(){
+  const order=[...Array(N)].map((_,i)=>i).sort((a,b)=>S.ranks[b]-S.ranks[a]);
+  const daily=S.mode==="daily";
+  if(TEST_RESHUFFLE && daily && crowd.fakeFor!==S.seed){crowd.plays=fakeCrowd(S.cands).concat([{ranks:S.ranks.slice()}]); crowd.fakeFor=S.seed}
+  const plays=crowd.plays||[], players=plays.length;
+  const sc = daily && players ? score(S.ranks,plays) : null;
+  const rows=order.map(ci=>{
+    const r=S.ranks[ci]; let stats="";
+    if(daily){const s=sc&&sc.per[ci];
+      if(s){
+        stats=`<div class="stats"><div><strong>${s.pct}%</strong> also said ${r}</div>
+          <div class="hist" aria-hidden="true">${s.counts.slice(1).map((n,k)=>`<i class="${k+1===r?"me":""}" style="height:${Math.max(4,Math.round(100*n/Math.max(1,...s.counts.slice(1))))}%"></i>`).join("")}</div>
+          <div class="hist-x" aria-hidden="true">${[...Array(N)].map((_,k)=>`<span>${k+1}</span>`).join("")}</div>
+          <div class="hint">average rank ${s.avg.toFixed(1)}</div></div>`}
+      else stats=`<div class="stats hint">${crowd.status==="test"?"Crowd results are off in test mode.":crowd.status==="off"?"Crowd results aren't available in this view.":"Waiting on the crowd…"}</div>`;
+    }
+    return `<article class="row"><div class="badge">${r}</div>
+      <div><h4>Candidate ${pad(ci+1)}</h4><ul>${traitList(S.cands[ci])}</ul></div>${stats}</article>`}).join("");
+
+  let head, note="";
+  if(daily){
+    head = players>1 ? `${players} people have ranked today's lineup so far. Your crowd match is ${sc.match}%.`
+                     : "Your lineup is locked in.";
+    if(TEST_RESHUFFLE) note=`<p class="note"><b>Sample crowd:</b> these ${players} players are made up so you can see how results look. Nothing here is real or saved.</p>`;
+    else if(players===1) note=`<p class="note">You're the first one here today. Check back later to see how everyone else ranked them.</p>`;
+    if(crowd.status==="readonly") note=`<p class="note">You can see the crowd, but this link doesn't let your picks count toward it.</p>`;
+    if(crowd.status==="slow") note=`<p class="note">Can't reach the crowd results yet. They'll show up here once they load.</p>`;
+  } else head="That's your lineup. Want another round?";
+  const share = shareText(sc);
+  const yv = daily ? (TEST_RESHUFFLE ? crowd.sampleYday : crowd.yday) : null;
+  return `<section class="results">
+    <div class="summary"><div><h2>${daily?"Today's lineup":"Your lineup"}</h2><p>${head}</p></div>
+      <div class="lock-row"><button class="btn" id="again">${daily?"Play free mode":"Deal again"}</button></div></div>
+    ${note}
+    <section class="share" aria-label="Share">
+      <h3>Share it</h3>
+      ${yv?`<div class="key" role="note"><b>Key</b><span>❤️‍🔥 you picked the crowd's top rank</span><span>💖 at least 15% agreed</span><span>💗 you were on your own</span></div>`:""}
+      <div class="share-grid">${shareCard(daily?"Today's results":"Your picks","Your number for each candidate, in the order they appeared.",share,"Copy today's results")}
+      ${yv?shareCard("Yesterday's verdict",yv.sample?"Sample numbers for now. Real crowd results start when test mode is off.":"How your picks from yesterday lined up with everyone else's.",verdictText(yv),"Copy yesterday's verdict",yv.sample,"alt"):""}</div>
+    </section>
+    <div class="rows">${rows}</div>
+  </section>`;
+}
+function shareCard(title,blurb,text,label,sample,cls=""){
+  return `<article class="share-card ${cls}"><div class="share-head"><h4>${esc(title)}</h4>${sample?`<span class="tag">sample</span>`:""}</div>
+    <p class="hint">${esc(blurb)}</p>
+    <div class="bubble" tabindex="0">${esc(text)}</div>
+    <button class="btn sm" data-copy="${esc(text)}">${esc(label)}</button></article>`;
+}
+function shareText(sc){
+  if(S.mode!=="daily") return `They're a 10 but… free play\n${emojiRanks(S.ranks)}`;
+  const lines=[`They're a 10 but… #${dayNum(DAY)} ${fmtDay(DAY)} results`, emojiRanks(S.ranks)];
+  if(sc && sc.players>1 && !TEST_RESHUFFLE) lines.push(`Crowd match so far: ${sc.match}% (${sc.players} players)`);
+  else lines.push("Crowd verdict drops tomorrow 👀");
+  return lines.join("\n");
+}
+
+/* ---------- actions ---------- */
+function choose(r){ if(S.done||S.ranks.includes(r)) return; S.pick=r; render(); }
+function lock(){
+  if(S.pick==null) return;
+  S.ranks[S.i]=S.pick; S.pick=null;
+  if(S.i===N-1){S.done=true} else S.i++;
+  saveState(); render();
+  if(S.done && S.mode==="daily"){ rememberDaily(); submit(); }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function copy(btn,text){
+  const done=()=>{const t=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=t,1600)};
+  navigator.clipboard.writeText(text).then(done,()=>{const box=btn.parentElement.querySelector(".bubble");if(box){const r=document.createRange();r.selectNodeContents(box);const sel=getSelection();sel.removeAllRanges();sel.addRange(r)}});
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.rank) choose(+t.dataset.rank);
+  else if(t.id==="lock") lock();
+  else if(t.dataset.peek!=null){const ci=+t.dataset.peek; openSlots.has(ci)?openSlots.delete(ci):openSlots.add(ci); render()}
+  else if(t.id==="again"){ if(S.mode==="daily"){switchMode("free")} else {S=newGame("free");openSlots.clear();saveState();render()} }
+  else if(t.id==="reshuffle"){S=newGame("daily");openSlots.clear();saveState();render();window.scrollTo({top:0,behavior:"smooth"})}
+  else if(t.dataset.copy!=null) copy(t,t.dataset.copy);
+});
+document.addEventListener("keydown",e=>{
+  if(S.done||e.metaKey||e.ctrlKey||e.altKey) return;
+  if(/^[0-9]$/.test(e.key)){choose(e.key==="0"?10:+e.key)}
+  else if(e.key==="Enter" && S.pick!=null && !(e.target.closest&&e.target.closest("button"))){e.preventDefault();lock()}
+});
+function switchMode(m){ saveState(); S=loadState(m); openSlots.clear(); render(); }
+document.getElementById("tab-daily").onclick=()=>switchMode("daily");
+document.getElementById("tab-free").onclick=()=>switchMode("free");
+
+if(TEST_RESHUFFLE){ S=newGame("daily"); saveState(); crowd.status="test"; crowd.sampleYday=sampleVerdict(); render(); }
+else { S = loadState("daily"); render(); connect(); }
+</script>
+
+</body></html>
