@@ -307,7 +307,10 @@ const crowd = {
 };
 
 async function fetchCrowd(day) {
-  const response = await fetch(`/api/crowd?day=${encodeURIComponent(day)}&v=${V}`, {
+  // With this browser's anonymous ID, the server also returns this player's own Crowd Match.
+  const playerId = store.get('t10-player-id');
+  const mine = playerId ? `&player=${encodeURIComponent(playerId)}` : '';
+  const response = await fetch(`/api/crowd?day=${encodeURIComponent(day)}&v=${V}${mine}`, {
     cache: 'no-store'
   });
   if (!response.ok) throw new Error(`Crowd API returned ${response.status}`);
@@ -411,15 +414,31 @@ function statsFor(ci, myRank, plays) {
     top: total > 0 && counts[myRank] === max
   };
 }
-/* Crowd match = average share of players who gave the same rank to each candidate. */
+/* Pairwise Crowd Match. For every pair of candidates (45 pairs with 10), check whether another
+   player put the same one higher than you did. Compared against everyone except you:
+   Crowd Match = agreed comparisons / total comparisons x 100. Two random rankings agree ~50%. */
+const PAIRS=[];for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)PAIRS.push([i,j]);
+function pairwiseMatch(mine, others){
+  let agreed=0;
+  for(const theirs of others) for(const [i,j] of PAIRS) if(Math.sign(mine[i]-mine[j])===Math.sign(theirs[i]-theirs[j])) agreed++;
+  const comparisons=others.length*PAIRS.length;
+  return {percent:comparisons?100*agreed/comparisons:null, agreed, comparisons, others:others.length};
+}
+/* Leaderboard score (for ranking players later): pulls a match toward the neutral 50 when few people
+   have played, so 60% with 1 other player (50.9) can't beat 60% backed by 200 players (59.5).
+   M = actual pairwise match %, P = total players including you. */
+const leaderboardScore=(M,P)=>50+(M-50)*(P-1)/(P+9);
+function withMatch(base, m){
+  const exact = m && m.comparisons ? m.percent : null;
+  return {...base, match: exact==null?null:Math.round(exact), matchExact: exact,
+    board: exact==null?null:Math.round(leaderboardScore(exact, base.players)*10)/10};
+}
 function score(ranks, plays) {
   const per = ranks.map((rank, ci) => statsFor(ci, rank, plays));
-  const players = Array.isArray(plays) ? plays.length : plays.players;
-  return {
-    per, players,
-    match: Math.round(per.reduce((sum, item) => sum + item.pct, 0) / N),
-    favs: per.filter((item) => item.top).length
-  };
+  const fake = Array.isArray(plays);
+  const players = fake ? plays.length : plays.players;
+  const m = fake ? pairwiseMatch(ranks, plays.filter((p) => !p.me).map((p) => p.ranks)) : plays.match;
+  return withMatch({ per, players, favs: per.filter((item) => item.top).length }, m);
 }
 const GAME_URL = "https://theyrea10.netlify.app";
 function verdictText(y){
@@ -466,7 +485,7 @@ function render(){
 
 function renderVerdict(){
   const el=document.getElementById("verdict"), y=crowd.yday;
-  if(!y || S.mode!=="daily"){el.innerHTML="";return}
+  if(!y || y.match==null || S.mode!=="daily"){el.innerHTML="";return}
   const text=verdictText(y);
   el.innerHTML=`<section class="verdict" aria-label="Yesterday's results">
     <h3>Yesterday's verdict is in</h3>
@@ -518,7 +537,7 @@ function playHTML(){
 function resultsHTML(){
   const order=[...Array(N)].map((_,i)=>i).sort((a,b)=>S.ranks[b]-S.ranks[a]);
   const daily=S.mode==="daily";
-  if(TEST_RESHUFFLE && daily && crowd.fakeFor!==S.seed){crowd.plays=fakeCrowd(S.cands).concat([{ranks:S.ranks.slice()}]); crowd.fakeFor=S.seed}
+  if(TEST_RESHUFFLE && daily && crowd.fakeFor!==S.seed){crowd.plays=fakeCrowd(S.cands).concat([{ranks:S.ranks.slice(),me:true}]); crowd.fakeFor=S.seed}
   const plays=crowd.plays||[], players=Array.isArray(plays)?plays.length:(plays.players||0);
   const sc = daily && players ? score(S.ranks,plays) : null;
   const rows=order.map(ci=>{
@@ -536,7 +555,7 @@ function resultsHTML(){
 
   let head, note="";
   if(daily){
-    head = players>1 ? `${players} people have ranked today's lineup so far. Your crowd match is ${sc.match}%.`
+    head = players>1 && sc.match!=null ? `${players} people have ranked today's lineup so far. Your crowd match is ${sc.match}%.`
                      : "Your lineup is locked in.";
     if(TEST_RESHUFFLE) note=`<p class="note"><b>Sample crowd:</b> these ${players} players are made up so you can see how results look. Nothing here is real or saved.</p>`;
     else if(players===1) note=`<p class="note">You're the first one here today. Check back later to see how everyone else ranked them.</p>`;
@@ -572,7 +591,7 @@ function shareCard(title,blurb,text,label,sample,cls=""){
 function shareText(sc){
   if(S.mode!=="daily") return `They're a 10 - free play\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
   let head=`They're a 10 #${dayNum(DAY)}`;
-  if(sc && sc.players>1 && !TEST_RESHUFFLE) head+=` - ${sc.match}% Crowd Match (${sc.players} players)`;
+  if(sc && sc.players>1 && sc.match!=null && !TEST_RESHUFFLE) head+=` - ${sc.match}% Crowd Match (${sc.players} players)`;
   return `${head}\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
 }
 
