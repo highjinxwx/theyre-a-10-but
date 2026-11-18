@@ -564,13 +564,16 @@ function shareCard(title,blurb,text,label,sample,cls=""){
     <div class="bubble" tabindex="0">${esc(text)}</div>
     <button class="btn sm" data-copy="${esc(text)}">${esc(label)}</button></article>`;
 }
+/* Share format:
+   They're a 10 #5 - 60% Crowd Match (142 players)
+   9️⃣4️⃣3️⃣1️⃣7️⃣8️⃣6️⃣2️⃣5️⃣🔟
+   https://theyrea10.netlify.app
+   The crowd part is left off until at least one other player has finished that day. */
 function shareText(sc){
-  if(S.mode!=="daily") return `They're a 10 but… free play\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
-  const lines=[`They're a 10 but… #${dayNum(DAY)} ${fmtDay(DAY)} results`, emojiRanks(S.ranks)];
-  if(sc && sc.players>1 && !TEST_RESHUFFLE) lines.push(`Crowd match so far: ${sc.match}% (${sc.players} players)`);
-  else lines.push("Crowd verdict drops tomorrow 👀");
-  lines.push(GAME_URL);
-  return lines.join("\n");
+  if(S.mode!=="daily") return `They're a 10 - free play\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
+  let head=`They're a 10 #${dayNum(DAY)}`;
+  if(sc && sc.players>1 && !TEST_RESHUFFLE) head+=` - ${sc.match}% Crowd Match (${sc.players} players)`;
+  return `${head}\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
 }
 
 /* ---------- actions ---------- */
