@@ -421,8 +421,9 @@ function score(ranks, plays) {
     favs: per.filter((item) => item.top).length
   };
 }
+const GAME_URL = "https://theyrea10.netlify.app";
 function verdictText(y){
-  return `They're a 10 but… #${dayNum(YDAY)} ${fmtDay(YDAY)} verdict\n${emojiRanks(y.ranks)}\n${y.per.map(heart).join("")}\nCrowd match ${y.match}% · ${y.favs}/${N} crowd favorites`;
+  return `They're a 10 but… #${dayNum(YDAY)} ${fmtDay(YDAY)} verdict\n${emojiRanks(y.ranks)}\n${y.per.map(heart).join("")}\nCrowd match ${y.match}% · ${y.favs}/${N} crowd favorites\n${GAME_URL}`;
 }
 /* Test mode only: a made-up verdict so the share layout can be previewed. Never written anywhere. */
 function sampleVerdict(){
@@ -564,10 +565,11 @@ function shareCard(title,blurb,text,label,sample,cls=""){
     <button class="btn sm" data-copy="${esc(text)}">${esc(label)}</button></article>`;
 }
 function shareText(sc){
-  if(S.mode!=="daily") return `They're a 10 but… free play\n${emojiRanks(S.ranks)}`;
+  if(S.mode!=="daily") return `They're a 10 but… free play\n${emojiRanks(S.ranks)}\n${GAME_URL}`;
   const lines=[`They're a 10 but… #${dayNum(DAY)} ${fmtDay(DAY)} results`, emojiRanks(S.ranks)];
   if(sc && sc.players>1 && !TEST_RESHUFFLE) lines.push(`Crowd match so far: ${sc.match}% (${sc.players} players)`);
   else lines.push("Crowd verdict drops tomorrow 👀");
+  lines.push(GAME_URL);
   return lines.join("\n");
 }
 
