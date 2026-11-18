@@ -1,7 +1,7 @@
 // Anonymous daily stats endpoint, backed by Netlify Database (PostgreSQL).
 // GET  /api/crowd?day=YYYY-MM-DD&v=3   -> public aggregate distributions
-//      add &player=<browser id>         -> also that player's pairwise Crowd Match
-//                                          (only their own score; no one's picks are returned)
+//      add &player=<browser id>         -> also says whether that player's own play is in the totals,
+//                                          so the game can leave it out of their Crowd Match
 // POST /api/crowd                     -> save one completed daily ranking
 // No Supabase keys or manually managed database URLs are needed.
 import { getDatabase } from '@netlify/database';
@@ -30,26 +30,6 @@ function validRanks(ranks) {
   return Array.isArray(ranks) && ranks.length === RANK_COUNT &&
     ranks.every((rank) => Number.isInteger(rank) && rank >= 1 && rank <= RANK_COUNT) &&
     new Set(ranks).size === RANK_COUNT;
-}
-
-/* Pairwise Crowd Match. For every pair of candidates (45 pairs with 10), check whether
-   another player put the same one higher than you did. Compared against everyone except
-   you; the result is agreed comparisons / total comparisons x 100. */
-const PAIRS = [];
-for (let i = 0; i < RANK_COUNT; i++) for (let j = i + 1; j < RANK_COUNT; j++) PAIRS.push([i, j]);
-
-export function pairwiseMatch(mine, others) {
-  let agreed = 0;
-  for (const theirs of others) {
-    for (const [i, j] of PAIRS) {
-      if (Math.sign(mine[i] - mine[j]) === Math.sign(theirs[i] - theirs[j])) agreed++;
-    }
-  }
-  const comparisons = others.length * PAIRS.length;
-  return {
-    percent: comparisons ? (100 * agreed) / comparisons : null,
-    agreed, comparisons, others: others.length,
-  };
 }
 
 function json(body, status = 200) {
@@ -100,21 +80,19 @@ export default async function crowd(request) {
       }
       const players = counts[0].reduce((total, votes) => total + votes, 0);
 
-      // Optional: this browser's own pairwise Crowd Match for the day.
-      let match = null;
+      // Optional: is this browser's own play already counted in these totals?
+      let included = null;
       const player = url.searchParams.get('player');
       if (player !== null) {
         if (!UUID_RE.test(player)) return json({ error: 'Invalid player' }, 400);
-        const plays = await db.sql`
-          SELECT (player_id = ${player}::uuid) AS mine, ranks
-          FROM public.daily_plays
-          WHERE play_date = ${day}::date AND game_version = ${version}
+        const mine = await db.sql`
+          SELECT 1 FROM public.daily_plays
+          WHERE play_date = ${day}::date AND game_version = ${version} AND player_id = ${player}::uuid
+          LIMIT 1
         `;
-        const toRanks = (row) => Array.from(row.ranks, Number);
-        const me = plays.find((row) => row.mine);
-        if (me) match = pairwiseMatch(toRanks(me), plays.filter((row) => !row.mine).map(toRanks));
+        included = mine.length > 0;
       }
-      return json({ day, v: version, players, counts, match });
+      return json({ day, v: version, players, counts, included });
     }
 
     // POST: only a completed, correctly-ranked daily lineup for the current
