@@ -1,0 +1,10 @@
+{
+  "name": "theyre-a-10-but",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Daily ranking game with Netlify Database statistics",
+  "dependencies": {
+    "@netlify/database": "^2.0.3"
+  }
+}

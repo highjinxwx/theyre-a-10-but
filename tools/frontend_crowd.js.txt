@@ -1,0 +1,78 @@
+/* ---------- shared results (Netlify Database via Netlify Function) ---------- */
+const crowd = {
+  mine: null, plays: null, status: 'connecting',
+  wrote: false, writing: false, yday: null
+};
+
+async function fetchCrowd(day) {
+  const response = await fetch(`/api/crowd?day=${encodeURIComponent(day)}&v=${V}`, {
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`Crowd API returned ${response.status}`);
+  return response.json();
+}
+
+async function connect() {
+  try {
+    crowd.plays = await fetchCrowd(DAY);
+    crowd.status = 'live';
+  } catch (error) {
+    console.warn('Crowd statistics unavailable:', error);
+    crowd.status = 'off';
+  }
+  render();
+  // A game completed before the API was ready will still be submitted.
+  // Unique DB constraint makes retries safe if the response was lost.
+  if (S.mode === 'daily' && S.done) await submit();
+  await loadYesterday();
+}
+
+async function loadYesterday() {
+  const history = store.get('t10-hist-v' + V) || {};
+  const myRanks = history[YDAY];
+  if (!Array.isArray(myRanks) || myRanks.length !== N) return;
+  try {
+    const yesterday = await fetchCrowd(YDAY);
+    if (!yesterday.players) return;
+    crowd.yday = { ranks: myRanks, ...score(myRanks, yesterday) };
+    renderVerdict();
+  } catch (error) {
+    console.warn('Yesterday statistics unavailable:', error);
+  }
+}
+
+async function submit() {
+  if (crowd.wrote || crowd.writing || TEST_RESHUFFLE ||
+      S.mode !== 'daily' || !S.done) return;
+
+  // The ID is a randomly generated browser identifier, not an account.
+  let playerId = store.get('t10-player-id');
+  if (!playerId) {
+    playerId = crypto.randomUUID();
+    store.set('t10-player-id', playerId);
+  }
+
+  crowd.writing = true;
+  try {
+    const response = await fetch('/api/crowd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId, day: DAY, v: V, ranks: S.ranks.slice() })
+    });
+    if (!response.ok) throw new Error(`Save returned ${response.status}`);
+    crowd.wrote = true;
+    try {
+      crowd.plays = await fetchCrowd(DAY);
+      crowd.status = 'live';
+    } catch (error) {
+      console.warn('Saved picks, but could not refresh stats:', error);
+      crowd.status = 'off';
+    }
+  } catch (error) {
+    console.warn('Could not save daily picks:', error);
+    crowd.status = 'off';
+  } finally {
+    crowd.writing = false;
+    render();
+  }
+}

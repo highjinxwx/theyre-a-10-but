@@ -1,0 +1,30 @@
+function statsFor(ci, myRank, plays) {
+  // Fake crowd in test mode is an array; live crowd is aggregated SQL counts.
+  const fake = Array.isArray(plays);
+  const counts = fake ? Array(N + 1).fill(0) : plays.counts[ci].slice();
+  if (fake) {
+    for (const play of plays) {
+      const rank = play.ranks[ci];
+      if (rank >= 1 && rank <= N) counts[rank]++;
+    }
+  }
+  const total = fake ? plays.length : plays.players;
+  const max = Math.max(...counts.slice(1));
+  const avg = counts.reduce((sum, votes, rank) => sum + votes * rank, 0) / Math.max(1, total);
+  return {
+    counts, total,
+    pct: Math.round(100 * counts[myRank] / Math.max(1, total)),
+    avg,
+    top: total > 0 && counts[myRank] === max
+  };
+}
+/* Crowd match = average share of players who gave the same rank to each candidate. */
+function score(ranks, plays) {
+  const per = ranks.map((rank, ci) => statsFor(ci, rank, plays));
+  const players = Array.isArray(plays) ? plays.length : plays.players;
+  return {
+    per, players,
+    match: Math.round(per.reduce((sum, item) => sum + item.pct, 0) / N),
+    favs: per.filter((item) => item.top).length
+  };
+}

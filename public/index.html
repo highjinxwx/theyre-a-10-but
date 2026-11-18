@@ -256,62 +256,84 @@ function loadState(mode){
 function rememberDaily(){ const h=store.get("t10-hist-v"+V)||{}; h[DAY]=S.ranks.slice();
   const keep=Object.keys(h).sort().slice(-7); store.set("t10-hist-v"+V,Object.fromEntries(keep.map(k=>[k,h[k]]))) }
 
-/* ---------- shared results (db) ----------
-   One doc per player at plays/<id>: {date, ranks, prevDate, prevRanks}.
-   Today's crowd = docs where date==today. Yesterday's crowd = date==yesterday ∪ prevDate==yesterday. */
-const crowd = {db:null, uid:null, mine:null, plays:null, status:"connecting", wrote:false, yday:null};
-async function connect(){
-  try{
-    const [db,user] = await Promise.all([claude.use("db"), claude.use("user")]);
-    if(!db || !user){crowd.status="off";render();return}
-    crowd.db=db; crowd.uid=await user.id();
-    if(crowd.uid){
-      const snap = await db.doc("plays/"+crowd.uid).get().catch(()=>null);
-      if(snap && snap.exists){crowd.mine=snap.data(); if(crowd.mine.date===DAY && crowd.mine.v===V && Array.isArray(crowd.mine.ranks)) crowd.wrote=true}
-    }
-    // Finished today on another device: show those results here too.
-    if(crowd.wrote && S.mode==="daily" && !S.done){
-      const daily=loadState("daily"); daily.ranks=crowd.mine.ranks.slice(); daily.done=true; daily.i=N;
-      store.set("t10-daily",{...daily,cands:undefined}); S=daily;
-    }
-    const timer=setTimeout(()=>{if(crowd.status==="connecting"){crowd.status="slow";render()}},10000);
-    db.collection("plays").where("date","==",DAY).onSnapshot(snap=>{
-      if(!snap.metadata.fromCache) clearTimeout(timer);
-      crowd.plays = snap.docs.map(d=>d.data()).filter(d=>d.v===V&&Array.isArray(d.ranks)&&d.ranks.length===N);
-      crowd.status="live"; render();
-    }, ()=>{clearTimeout(timer);crowd.status="off";render()});
-    if(S.mode==="daily" && S.done) submit();
-    loadYesterday();
-    render();
-  }catch(e){crowd.status="off";render()}
-}
-async function loadYesterday(){
-  const m=crowd.mine||{}, hist=store.get("t10-hist-v"+V)||{};
-  const myRanks = m.date===YDAY&&m.v===V ? m.ranks : m.prevDate===YDAY&&m.prevV===V ? m.prevRanks : hist[YDAY];
-  if(!Array.isArray(myRanks)||myRanks.length!==N) return;
-  try{
-    const [a,b] = await Promise.all([
-      crowd.db.collection("plays").where("date","==",YDAY).get(),
-      crowd.db.collection("plays").where("prevDate","==",YDAY).get()]);
-    const byId=new Map();
-    for(const d of a.docs) if(d.data().v===V) byId.set(d.id,d.data().ranks);
-    for(const d of b.docs) if(d.data().prevV===V) byId.set(d.id,d.data().prevRanks);
-    const plays=[...byId.values()].filter(r=>Array.isArray(r)&&r.length===N).map(ranks=>({ranks}));
-    if(!plays.length) return;
-    crowd.yday={ranks:myRanks, ...score(myRanks,plays)};
-    renderVerdict();
-  }catch(e){}
-}
-async function submit(){
-  if(!crowd.db||!crowd.uid||crowd.wrote) return;
-  crowd.wrote=true;
-  const m=crowd.mine;
-  const prev = m && m.date!==DAY ? {prevDate:m.date??null, prevRanks:m.ranks??null, prevV:m.v??null} : {prevDate:m?.prevDate??null, prevRanks:m?.prevRanks??null, prevV:m?.prevV??null};
-  const doc={date:DAY, v:V, ranks:S.ranks.slice(), at:Date.now(), ...prev};
-  try{ await crowd.db.doc("plays/"+crowd.uid).set(doc); crowd.mine=doc }
-  catch(e){ if(e && e.code==="invalid_argument"){crowd.status="readonly"; render()} }
+/* ---------- shared results (Netlify Database via Netlify Function) ---------- */
+const crowd = {
+  mine: null, plays: null, status: 'connecting',
+  wrote: false, writing: false, yday: null
+};
+
+async function fetchCrowd(day) {
+  const response = await fetch(`/api/crowd?day=${encodeURIComponent(day)}&v=${V}`, {
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`Crowd API returned ${response.status}`);
+  return response.json();
 }
 
+async function connect() {
+  try {
+    crowd.plays = await fetchCrowd(DAY);
+    crowd.status = 'live';
+  } catch (error) {
+    console.warn('Crowd statistics unavailable:', error);
+    crowd.status = 'off';
+  }
+  render();
+  // A game completed before the API was ready will still be submitted.
+  // Unique DB constraint makes retries safe if the response was lost.
+  if (S.mode === 'daily' && S.done) await submit();
+  await loadYesterday();
+}
+
+async function loadYesterday() {
+  const history = store.get('t10-hist-v' + V) || {};
+  const myRanks = history[YDAY];
+  if (!Array.isArray(myRanks) || myRanks.length !== N) return;
+  try {
+    const yesterday = await fetchCrowd(YDAY);
+    if (!yesterday.players) return;
+    crowd.yday = { ranks: myRanks, ...score(myRanks, yesterday) };
+    renderVerdict();
+  } catch (error) {
+    console.warn('Yesterday statistics unavailable:', error);
+  }
+}
+
+async function submit() {
+  if (crowd.wrote || crowd.writing || TEST_RESHUFFLE ||
+      S.mode !== 'daily' || !S.done) return;
+
+  // The ID is a randomly generated browser identifier, not an account.
+  let playerId = store.get('t10-player-id');
+  if (!playerId) {
+    playerId = crypto.randomUUID();
+    store.set('t10-player-id', playerId);
+  }
+
+  crowd.writing = true;
+  try {
+    const response = await fetch('/api/crowd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId, day: DAY, v: V, ranks: S.ranks.slice() })
+    });
+    if (!response.ok) throw new Error(`Save returned ${response.status}`);
+    crowd.wrote = true;
+    try {
+      crowd.plays = await fetchCrowd(DAY);
+      crowd.status = 'live';
+    } catch (error) {
+      console.warn('Saved picks, but could not refresh stats:', error);
+      crowd.status = 'off';
+    }
+  } catch (error) {
+    console.warn('Could not save daily picks:', error);
+    crowd.status = 'off';
+  } finally {
+    crowd.writing = false;
+    render();
+  }
+}
 /* ---------- test mode: a made-up crowd ----------
    Each fake player scores candidates by how many good traits they have, plus personal taste (noise),
    then ranks them 1-10. Gives realistic-looking spreads: clear favorites, contested middles. */
@@ -325,16 +347,35 @@ function fakeCrowd(cands, players=140){
 }
 
 /* ---------- crowd math ---------- */
-function statsFor(ci, myRank, plays){
-  const counts=Array(N+1).fill(0); for(const p of plays){const r=p.ranks[ci]; if(r>=1&&r<=N) counts[r]++}
-  const total=plays.length, max=Math.max(...counts.slice(1));
-  const avg=plays.reduce((s,p)=>s+(p.ranks[ci]||0),0)/total;
-  return {counts,total,pct:Math.round(100*counts[myRank]/total),avg,top:counts[myRank]===max};
+function statsFor(ci, myRank, plays) {
+  // Fake crowd in test mode is an array; live crowd is aggregated SQL counts.
+  const fake = Array.isArray(plays);
+  const counts = fake ? Array(N + 1).fill(0) : plays.counts[ci].slice();
+  if (fake) {
+    for (const play of plays) {
+      const rank = play.ranks[ci];
+      if (rank >= 1 && rank <= N) counts[rank]++;
+    }
+  }
+  const total = fake ? plays.length : plays.players;
+  const max = Math.max(...counts.slice(1));
+  const avg = counts.reduce((sum, votes, rank) => sum + votes * rank, 0) / Math.max(1, total);
+  return {
+    counts, total,
+    pct: Math.round(100 * counts[myRank] / Math.max(1, total)),
+    avg,
+    top: total > 0 && counts[myRank] === max
+  };
 }
-/* Crowd match = average, across the 10 candidates, of the share of players who gave the same rank you did. */
-function score(ranks, plays){
-  const per=ranks.map((r,ci)=>statsFor(ci,r,plays));
-  return {per, players:plays.length, match:Math.round(per.reduce((s,x)=>s+x.pct,0)/N), favs:per.filter(x=>x.top).length};
+/* Crowd match = average share of players who gave the same rank to each candidate. */
+function score(ranks, plays) {
+  const per = ranks.map((rank, ci) => statsFor(ci, rank, plays));
+  const players = Array.isArray(plays) ? plays.length : plays.players;
+  return {
+    per, players,
+    match: Math.round(per.reduce((sum, item) => sum + item.pct, 0) / N),
+    favs: per.filter((item) => item.top).length
+  };
 }
 function verdictText(y){
   return `They're a 10 but… #${dayNum(YDAY)} ${fmtDay(YDAY)} verdict\n${emojiRanks(y.ranks)}\n${y.per.map(heart).join("")}\nCrowd match ${y.match}% · ${y.favs}/${N} crowd favorites`;
@@ -433,7 +474,7 @@ function resultsHTML(){
   const order=[...Array(N)].map((_,i)=>i).sort((a,b)=>S.ranks[b]-S.ranks[a]);
   const daily=S.mode==="daily";
   if(TEST_RESHUFFLE && daily && crowd.fakeFor!==S.seed){crowd.plays=fakeCrowd(S.cands).concat([{ranks:S.ranks.slice()}]); crowd.fakeFor=S.seed}
-  const plays=crowd.plays||[], players=plays.length;
+  const plays=crowd.plays||[], players=Array.isArray(plays)?plays.length:(plays.players||0);
   const sc = daily && players ? score(S.ranks,plays) : null;
   const rows=order.map(ci=>{
     const r=S.ranks[ci]; let stats="";

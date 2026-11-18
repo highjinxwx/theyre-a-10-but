@@ -1,0 +1,6 @@
+# The HTML game is static. Only /public is published to visitors.
+[build]
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
